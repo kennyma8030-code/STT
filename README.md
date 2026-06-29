@@ -70,9 +70,10 @@ stops both servers.
 
 - **First run** with a given model downloads the Whisper weights, so it takes
   longer; after that it's cached.
-- **Device:** auto-detected — CUDA (`float16`) only if an NVIDIA GPU is present,
-  otherwise CPU (`int8`). Macs and AMD GPUs run on CPU (ctranslate2 has no
-  Apple-GPU/ROCm support). Smaller models (`tiny.en`) are much faster on CPU.
+- **Device:** auto-detected — CUDA if an NVIDIA GPU is present, otherwise CPU.
+  Macs and AMD GPUs run on CPU (ctranslate2 has no Apple-GPU/ROCm support).
+- **Compute type:** always `float32` (most accurate, but slower than `int8`/
+  `float16`). Smaller models (`tiny.en`) are much faster on CPU if you need speed.
 - **No auto-reload:** the backend runs without `--reload` (RealtimeSTT uses
   multiprocessing). After editing `main.py`, restart. Frontend edits hot-reload.
 - **The venv is not portable** across operating systems — run the setup steps on

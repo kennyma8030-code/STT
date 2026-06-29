@@ -41,7 +41,7 @@ except Exception:
     _HAS_CUDA = False
 
 DEVICE = "cuda" if _HAS_CUDA else "cpu"
-COMPUTE_TYPE = "float16" if _HAS_CUDA else "int8"
+COMPUTE_TYPE = "float32"  # always run float32 (most accurate; slower than int8/float16)
 
 AVAILABLE_MODELS = ["tiny.en", "base.en", "small.en", "medium.en", "large-v3"]
 
