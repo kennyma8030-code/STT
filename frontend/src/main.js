@@ -15,8 +15,24 @@ const lines = $("lines");
 const empty = $("empty");
 const deviceTag = $("device");
 const config = $("config");
+const shutdownBtn = $("shutdown");
+const themeBtn = $("theme");
 
 let recording = false;
+let es = null; // the SSE connection, so we can close it on shutdown
+
+// ── Theme (persisted in localStorage; applied pre-paint in index.html) ──
+function applyTheme(theme) {
+  const light = theme === "light";
+  document.documentElement.classList.toggle("light", light);
+  themeBtn.textContent = light ? "DARK" : "LIGHT"; // label = the mode you'd switch to
+}
+applyTheme(localStorage.getItem("theme") || "dark");
+themeBtn.addEventListener("click", () => {
+  const next = document.documentElement.classList.contains("light") ? "dark" : "light";
+  localStorage.setItem("theme", next);
+  applyTheme(next);
+});
 
 // ── Click-to-rebind a key ───────────────────────────────────────────────────
 function keyName(e) {
@@ -108,7 +124,7 @@ async function loadModels() {
 
 // ── SSE stream ───────────────────────────────────────────────────────────────
 function connect() {
-  const es = new EventSource(`${API}/stream`);
+  es = new EventSource(`${API}/stream`);
 
   es.addEventListener("status", (e) => {
     const d = JSON.parse(e.data);
@@ -171,6 +187,31 @@ startBtn.addEventListener("click", async () => {
 
 stopBtn.addEventListener("click", () => {
   fetch(`${API}/stop`, { method: "POST" }).catch(() => {});
+});
+
+shutdownBtn.addEventListener("click", async () => {
+  shutdownBtn.disabled = true;
+  shutdownBtn.textContent = "SHUTTING DOWN…";
+  try {
+    const res = await fetch(`${API}/shutdown`, { method: "POST" });
+    if (!res.ok) {
+      // server answered but rejected it (e.g. 404 = backend predates /shutdown)
+      shutdownBtn.disabled = false;
+      shutdownBtn.textContent = "SHUT DOWN SERVERS";
+      hint.textContent = `Shutdown failed (HTTP ${res.status}). Restart the backend so it has /shutdown.`;
+      return;
+    }
+  } catch {
+    // connection dropped as the server exited — that's the success signal
+  }
+  if (es) es.close(); // stop SSE auto-reconnect attempts
+  setStatus("stopped");
+  sessionActive(false);
+  startBtn.disabled = true;
+  deviceTag.textContent = "offline";
+  deviceTag.classList.add("warn");
+  hint.textContent = "Servers stopped. Restart with `npm run dev`.";
+  shutdownBtn.textContent = "SERVERS STOPPED";
 });
 
 loadModels();

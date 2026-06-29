@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Speech to Text</title>
+    <script>
+      // apply saved theme before first paint to avoid a flash
+      try {
+        if (localStorage.getItem("theme") === "light")
+          document.documentElement.classList.add("light");
+      } catch {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,7 +25,10 @@
         <div class="panel-body">
           <div class="brand">
             <h1>SPEECH <span>&rarr;</span> TEXT</h1>
-            <span id="device" class="device">…</span>
+            <div class="brand-right">
+              <button id="theme" class="toggle" type="button">LIGHT</button>
+              <span id="device" class="device">…</span>
+            </div>
           </div>
 
           <label class="field">
@@ -49,6 +59,8 @@
             to talk and release to transcribe — each line is sent to your Discord
             channel and shown on the right. Press the quit key to end the session.
           </p>
+
+          <button id="shutdown" class="btn quit">SHUT DOWN SERVERS</button>
         </div>
       </aside>
 

@@ -20,6 +20,7 @@ Run (no --reload; RealtimeSTT uses multiprocessing):
 import asyncio
 import json
 import multiprocessing
+import os
 import threading
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -200,6 +201,29 @@ async def stop():
     if _listener is not None:
         _listener.stop()  # makes join() return -> triggers cleanup
     return {"status": "stopping"}
+
+
+@app.post("/shutdown")
+async def shutdown():
+    """End the whole stack: clean up, then exit the process. Because the dev
+    launcher runs both servers under `concurrently -k`, exiting the backend
+    also takes the Vite frontend down with it."""
+
+    def _die():
+        try:
+            if _listener is not None:
+                _listener.stop()
+        except Exception:
+            pass
+        try:
+            if _recorder is not None:
+                _recorder.shutdown()
+        except Exception:
+            pass
+        os._exit(0)
+
+    threading.Timer(0.4, _die).start()  # let the HTTP response flush first
+    return {"status": "shutting down"}
 
 
 def _sse(obj: dict) -> str:
