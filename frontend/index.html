@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech to Discord</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class="app">
+      <aside class="panel config">
+        <div class="panel-tab">CONTROL</div>
+        <div class="panel-body">
+          <div class="brand">
+            <h1>SPEECH <span>&rarr;</span> DISCORD</h1>
+            <span id="device" class="device">…</span>
+          </div>
+
+          <label class="field">
+            <span class="label">Model</span>
+            <select id="model" class="select"></select>
+          </label>
+
+          <div class="keys">
+            <div class="field">
+              <span class="label">Push-to-talk</span>
+              <button id="ptt" class="keycap" data-key="f9">F9</button>
+            </div>
+            <div class="field">
+              <span class="label">Quit</span>
+              <button id="quit" class="keycap" data-key="esc">ESC</button>
+            </div>
+          </div>
+
+          <button id="start" class="btn primary">START SESSION</button>
+          <button id="stop" class="btn ghost" hidden>STOP SESSION</button>
+
+          <div class="status">
+            <span id="dot" class="dot idle"></span>
+            <span id="statusText">Idle</span>
+          </div>
+          <p id="hint" class="hint">
+            Pick a model and a push-to-talk key, then press Start. Hold the key
+            to talk and release to transcribe — each line is sent to your Discord
+            channel and shown on the right. Press the quit key to end the session.
+          </p>
+        </div>
+      </aside>
+
+      <section class="panel transcript">
+        <div class="panel-tab">TRANSCRIPT</div>
+        <div class="panel-body">
+          <ul id="lines" class="lines"></ul>
+          <p id="empty" class="empty">Nothing yet — hold your key and speak.</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
