@@ -33,6 +33,13 @@ from pynput import keyboard
 
 from bot import send_message
 
+# ── Force Hugging Face's classic download path ──────────────────────────────
+# HF migrated large model weights to its newer "Xet" storage backend, which can
+# stall at 0 bytes on some networks/Windows setups -- leaving the UI stuck on
+# "loading" while model.bin never downloads. The classic LFS CDN path is
+# reliable here, so disable Xet unless the user explicitly opts back in.
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+
 # ── Device auto-detect: CUDA if an NVIDIA GPU is visible, else CPU ──────────
 try:
     import ctranslate2
@@ -96,6 +103,34 @@ def _parse_key(name: str):
     raise ValueError(f"Unrecognized key: {name!r}")
 
 
+def _trust_silero_vad() -> None:
+    """Pre-authorize the Silero VAD repo for torch.hub.
+
+    RealtimeSTT loads Silero VAD via `torch.hub.load("snakers4/silero-vad", ...)`
+    with the default trust policy, which prompts `Do you trust this repository?
+    (y/N)` on first use. We run inside a background thread with no stdin, so that
+    prompt raises EOFError and aborts the whole recorder init -- the UI then sits
+    on "loading" forever. Adding the repo to torch.hub's trusted_list up front
+    makes that load proceed non-interactively (the download itself still happens
+    inside RealtimeSTT)."""
+    try:
+        import torch.hub
+
+        hub_dir = torch.hub.get_dir()
+        os.makedirs(hub_dir, exist_ok=True)
+        trusted_list = os.path.join(hub_dir, "trusted_list")
+        entry = "snakers4_silero-vad"
+        existing = set()
+        if os.path.exists(trusted_list):
+            with open(trusted_list) as f:
+                existing = {line.strip() for line in f}
+        if entry not in existing:
+            with open(trusted_list, "a") as f:
+                f.write(entry + "\n")
+    except Exception:
+        pass  # best effort; if it fails the load below surfaces a clear warning
+
+
 def _run_session(model: str, ptt_key: str, quit_key: str) -> None:
     """Background thread: load the model, then listen for the PTT key globally."""
     global _recorder, _listener, _recording
@@ -103,6 +138,8 @@ def _run_session(model: str, ptt_key: str, quit_key: str) -> None:
 
     _state.update(status="loading", model=model, device=DEVICE)
     _emit("status", status="loading", model=model, device=DEVICE)
+
+    _trust_silero_vad()
 
     try:
         ptt = _parse_key(ptt_key)
