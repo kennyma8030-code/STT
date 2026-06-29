@@ -21,7 +21,6 @@ import asyncio
 import json
 import multiprocessing
 import threading
-import time
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -74,7 +73,7 @@ app.add_middleware(
 
 
 class StartRequest(BaseModel):
-    model: str = "tiny.en"
+    model: str = "small.en"
     ptt_key: str = "f9"
     quit_key: str = "esc"
 
@@ -143,25 +142,12 @@ def _run_session(model: str, ptt_key: str, quit_key: str) -> None:
         global _recording
         if key == ptt and _recording:
             _recording = False
-            t0 = time.perf_counter()              # timer starts on release
             _emit("recording", recording=False)
             _recorder.stop()
-            t_stop = time.perf_counter()
             text = _recorder.text()
-            t_text = time.perf_counter()
             if text:
                 try:
                     send_message(text)            # ─► Discord (webhook POST)
-                    elapsed = time.perf_counter() - t0  # stop right after the response
-                    # stage breakdown (printed to the backend console)
-                    print(
-                        f"[timing] stop={t_stop - t0:.3f}s "
-                        f"transcribe={t_text - t_stop:.3f}s "
-                        f"webhook={time.perf_counter() - t_text:.3f}s "
-                        f"total={elapsed:.3f}s  model={_state['model']} device={DEVICE}",
-                        flush=True,
-                    )
-                    send_message(f"{elapsed:.3f}s")     # 2nd webhook: elapsed time only
                 except Exception as e:
                     _emit("warn", message=f"Discord send failed: {e}")
                 _emit("text", text=text)          # ─► frontend (SSE)

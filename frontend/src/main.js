@@ -97,6 +97,7 @@ async function loadModels() {
       o.textContent = m;
       modelSel.appendChild(o);
     }
+    if (models.includes("small.en")) modelSel.value = "small.en"; // default model
     deviceTag.textContent = device.toUpperCase();
     deviceTag.classList.toggle("warn", device === "cpu");
   } catch {
